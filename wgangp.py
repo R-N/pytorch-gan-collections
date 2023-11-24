@@ -240,6 +240,7 @@ def train():
 
 
 def main(argv):
+    print(FLAGS.grad_loss)
     set_seed(FLAGS.seed)
     if FLAGS.generate:
         generate()
