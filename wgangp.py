@@ -41,7 +41,7 @@ FLAGS = flags.FLAGS
 # model and training
 flags.DEFINE_enum('dataset', 'cifar10', ['cifar10', 'stl10'], "dataset")
 flags.DEFINE_enum('arch', 'res32', net_G_models.keys(), "architecture")
-flags.DEFINE_integer('total_steps', 100000, "total number of training steps")
+flags.DEFINE_integer('total_steps', 1000, "total number of training steps")
 flags.DEFINE_integer('batch_size', 64, "batch size")
 flags.DEFINE_float('lr_G', 2e-4, "Generator learning rate")
 flags.DEFINE_float('lr_D', 2e-4, "Discriminator learning rate")
