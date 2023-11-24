@@ -151,7 +151,10 @@ def train():
     sched_D = optim.lr_scheduler.LambdaLR(
         optim_D, lambda step: 1 - step / FLAGS.total_steps)
 
-    os.makedirs(os.path.join(FLAGS.logdir, 'sample'))
+    try:
+        os.makedirs(os.path.join(FLAGS.logdir, 'sample'))
+    except FileExistsError:
+        pass
     writer = SummaryWriter(os.path.join(FLAGS.logdir))
     sample_z = torch.randn(FLAGS.sample_size, FLAGS.z_dim).to(device)
     with open(os.path.join(FLAGS.logdir, "flagfile.txt"), 'w') as f:
