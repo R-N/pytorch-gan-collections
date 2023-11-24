@@ -95,7 +95,7 @@ def cacl_gradient_penalty(net_D, real, fake):
         grad_outputs=torch.ones_like(disc_interpolates),
         create_graph=True, retain_graph=True)[0]
 
-    grad_norm = torch.norm(torch.flatten(grad, start_dim=1), dim=1)
+    grad_norm = torch.flatten(grad, start_dim=1).norm(2, dim=1)
     loss_gp = torch.mean((grad_norm - 1) ** 2)
     return loss_gp
 
