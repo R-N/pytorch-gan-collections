@@ -76,7 +76,10 @@ def generate():
     net_G.eval()
 
     counter = 0
-    os.makedirs(FLAGS.output)
+    try:
+        os.makedirs(FLAGS.output)
+    except FileExistsError:
+        pass
     with torch.no_grad():
         for start in trange(
                 0, FLAGS.num_images, FLAGS.batch_size, dynamic_ncols=True):
