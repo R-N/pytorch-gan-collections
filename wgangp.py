@@ -31,6 +31,12 @@ loss_fns = {
     'softplus': losses.Softplus
 }
 
+grad_loss_fns = {
+    'mse': losses.mse,
+    'mile': losses.mile,
+    'mire': losses.mire,
+}
+
 FLAGS = flags.FLAGS
 # model and training
 flags.DEFINE_enum('dataset', 'cifar10', ['cifar10', 'stl10'], "dataset")
@@ -44,6 +50,7 @@ flags.DEFINE_integer('n_dis', 5, "update Generator every this steps")
 flags.DEFINE_integer('z_dim', 128, "latent space dimension")
 flags.DEFINE_float('alpha', 10, "gradient penalty")
 flags.DEFINE_enum('loss', 'was', loss_fns.keys(), "loss function")
+flags.DEFINE_enum('grad_loss', 'mse', grad_loss_fns.keys(), "grad loss function")
 flags.DEFINE_integer('seed', 0, "random seed")
 # logging
 flags.DEFINE_integer('eval_step', 5000, "evaluate FID and Inception Score")
@@ -96,7 +103,14 @@ def cacl_gradient_penalty(net_D, real, fake):
         create_graph=True, retain_graph=True)[0]
 
     grad_norm = torch.flatten(grad, start_dim=1).norm(2, dim=1)
-    loss_gp = torch.mean((grad_norm - 1) ** 2)
+    loss_gp = grad_loss_fns[FLAGS.grad_loss](
+        grad_norm,
+        torch.ones(
+            grad_norm.shape,
+            dtype=grad_norm.dtype,
+            device=grad_norm.device,
+        )
+    )
     return loss_gp
 
 
