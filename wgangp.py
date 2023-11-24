@@ -53,7 +53,7 @@ flags.DEFINE_enum('loss', 'was', loss_fns.keys(), "loss function")
 flags.DEFINE_enum('grad_loss', 'mse', grad_loss_fns.keys(), "grad loss function")
 flags.DEFINE_integer('seed', 0, "random seed")
 # logging
-flags.DEFINE_integer('eval_step', 5000, "evaluate FID and Inception Score")
+flags.DEFINE_integer('eval_step', 1000, "evaluate FID and Inception Score")
 flags.DEFINE_integer('sample_step', 500, "sample image every this steps")
 flags.DEFINE_integer('sample_size', 64, "sampling size of images")
 flags.DEFINE_string('logdir', './logs/WGANGP_CIFAR10_RES', 'logging folder')
@@ -63,7 +63,7 @@ flags.DEFINE_string('fid_cache', './stats/cifar10.train.npz', 'FID cache')
 flags.DEFINE_bool('generate', False, 'generate images')
 flags.DEFINE_string('pretrain', None, 'path to test model')
 flags.DEFINE_string('output', './outputs', 'path to output dir')
-flags.DEFINE_integer('num_images', 50000, 'the number of generated images')
+flags.DEFINE_integer('num_images', 1000, 'the number of generated images')
 
 device = torch.device('cuda:0')
 
