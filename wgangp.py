@@ -240,7 +240,11 @@ def train():
 
 
 def main(argv):
-    print(FLAGS.grad_loss)
+    print("grad_loss", FLAGS.grad_loss)
+    print("total_steps", FLAGS.total_steps)
+    print("eval_step", FLAGS.eval_step)
+    print("sample_step", FLAGS.sample_step)
+    print("num_images", FLAGS.num_images)
     set_seed(FLAGS.seed)
     if FLAGS.generate:
         generate()
