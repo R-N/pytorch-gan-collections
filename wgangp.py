@@ -47,7 +47,7 @@ ap.add_argument('--total_steps', default=1000, help="total number of training st
 ap.add_argument('--batch_size', default=64, help="batch size", type=int)
 ap.add_argument('--lr_G', default=2e-4, help="Generator learning rate", type=float)
 ap.add_argument('--lr_D', default=2e-4, help="Discriminator learning rate", type=float)
-ap.add_argument('--betas', [0.0,0.9], help="for Adam", type=list)
+ap.add_argument('--betas', default=[0.0,0.9], help="for Adam", type=list)
 ap.add_argument('--n_dis', default=5, help="update Generator every this steps", type=int)
 ap.add_argument('--z_dim', default=128, help="latent space dimension", type=int)
 ap.add_argument('--alpha', default=10, help="gradient penalty", type=int)
