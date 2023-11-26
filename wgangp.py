@@ -1,5 +1,6 @@
 import os
 
+import pandas as pd
 import torch
 import torch.optim as optim
 from absl import flags, app
@@ -11,7 +12,7 @@ from pytorch_gan_metrics import get_inception_score_and_fid
 
 import source.models.wgangp as models
 import source.losses as losses
-from source.utils import generate_imgs, infiniteloop, set_seed
+from source.utils import generate_imgs, infiniteloop, set_seed, get_gradients, reduce_grad
 
 
 net_G_models = {
@@ -57,7 +58,7 @@ flags.DEFINE_integer('eval_step', 1000, "evaluate FID and Inception Score")
 flags.DEFINE_integer('sample_step', 500, "sample image every this steps")
 flags.DEFINE_integer('sample_size', 64, "sampling size of images")
 flags.DEFINE_string('logdir', './logs/WGANGP_CIFAR10_RES', 'logging folder')
-flags.DEFINE_bool('record', True, "record inception score and FID")
+flags.DEFINE_bool('record', False, "record inception score and FID")
 flags.DEFINE_string('fid_cache', './stats/cifar10.train.npz', 'FID cache')
 # generate
 flags.DEFINE_bool('generate', False, 'generate images')
@@ -116,6 +117,19 @@ def cacl_gradient_penalty(net_D, real, fake):
     )
     return loss_gp
 
+def append_log(log, key, value, extend=False):
+    if key not in log:
+        log[key] = []
+
+    if hasattr(value, "item"):
+        value = value.item()
+    if hasattr(value, "__iter__"):
+        log[key].extend(value)
+    else:
+        log[key].append(value)
+
+def mean(x):
+    return sum(x) / len(x)
 
 def train():
     if FLAGS.dataset == 'cifar10':
@@ -166,10 +180,18 @@ def train():
     grid = (make_grid(real[:FLAGS.sample_size]) + 1) / 2
     writer.add_image('real_sample', grid)
 
+    log_history = {}
+    log_values = {}
+
     looper = infiniteloop(dataloader)
     with trange(1, FLAGS.total_steps + 1, desc='Training', ncols=0) as pbar:
         for step in pbar:
             # Discriminator
+            gp_grads = []
+            d_grads = []
+            d_losses = []
+            d_gps = []
+
             for _ in range(FLAGS.n_dis):
                 with torch.no_grad():
                     z = torch.randn(FLAGS.batch_size, FLAGS.z_dim).to(device)
@@ -177,12 +199,30 @@ def train():
                 real = next(looper).to(device)
                 net_D_real = net_D(real)
                 net_D_fake = net_D(fake)
+
+                optim_D.zero_grad()
+
                 loss = loss_fn(net_D_real, net_D_fake)
                 loss_gp = cacl_gradient_penalty(net_D, real, fake)
                 loss_all = loss + FLAGS.alpha * loss_gp
 
-                optim_D.zero_grad()
-                loss_all.backward()
+                loss_gp.backward()
+                gp_grad = get_gradients(net_D)
+
+                loss.backward()
+                grad = get_gradients(net_D)
+                d_grad = grad - gp_grad
+
+                gp_grad = reduce_grad(gp_grad)
+                d_grad = reduce_grad(d_grad)
+
+                gp_grads.append(gp_grad.item())
+                d_grads.append(d_grad.item())
+                d_losses.append(loss.item())
+                d_gps.append(loss_gp.item())
+
+                #loss_all.backward()
+
                 optim_D.step()
 
                 if FLAGS.loss == 'was':
@@ -190,6 +230,16 @@ def train():
                 pbar.set_postfix(loss='%.4f' % loss)
             writer.add_scalar('loss', loss, step)
             writer.add_scalar('loss_gp', loss_gp, step)
+
+            append_log(log_history, "gp_grad", mean(gp_grads))
+            append_log(log_history, "d_grad", mean(d_grads))
+            append_log(log_history, "d_loss", mean(d_losses))
+            append_log(log_history, "d_gp", mean(d_gps))
+
+            append_log(log_values, "gp_grad", gp_grads)
+            append_log(log_values, "d_grad", d_grad)
+            append_log(log_values, "d_loss", d_losses)
+            append_log(log_values, "d_gp", d_gps)
 
             # Generator
             for p in net_D.parameters():
@@ -236,8 +286,33 @@ def train():
                     writer.add_scalar('Inception_Score', IS[0], step)
                     writer.add_scalar('Inception_Score_std', IS[1], step)
                     writer.add_scalar('FID', FID, step)
+    
+    df_history = save_log(log_history, "history")
+    df_values = save_log(log_values, "values")
+
+    df_history[["d_grad", "gp_grad"]].plot()
+    df_history[["d_loss", "d_gp"]].plot()
+    df_values[["d_grad", "gp_grad"]].hist()
+    df_values[["d_loss", "d_gp"]].hist()
+
+    if not FLAGS.record:
+        imgs = generate_imgs(
+            net_G, device, FLAGS.z_dim,
+            FLAGS.num_images, FLAGS.batch_size)
+        IS, FID = get_inception_score_and_fid(
+            imgs, FLAGS.fid_cache, verbose=True)
+        print(
+            "Inception Score: %.3f(%.5f), "
+            "FID: %6.3f" % (
+                IS[0], IS[1], FID))
     writer.close()
 
+def save_log(log, name="log"):
+    df = pd.DataFrame(log)
+    df = pd.DataFrame.from_dict(log, orient='index')
+    df = df.transpose()
+    df.to_csv(os.path.join(FLAGS.logdir, f"name.csv"))
+    return df
 
 def main(argv):
     print("grad_loss", FLAGS.grad_loss)
