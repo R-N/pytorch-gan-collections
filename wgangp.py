@@ -98,7 +98,7 @@ def generate(FLAGS):
                 counter += 1
 
 
-def cacl_gradient_penalty(net_D, real, fake):
+def cacl_gradient_penalty(net_D, real, fake, grad_loss_fn="mse"):
     t = torch.rand(real.size(0), 1, 1, 1).to(real.device)
     t = t.expand(real.size())
 
@@ -111,7 +111,7 @@ def cacl_gradient_penalty(net_D, real, fake):
         create_graph=True, retain_graph=True)[0]
 
     grad_norm = torch.flatten(grad, start_dim=1).norm(2, dim=1)
-    loss_gp = grad_loss_fns[FLAGS.grad_loss](
+    loss_gp = grad_loss_fns[grad_loss_fn](
         grad_norm,
         torch.ones(
             grad_norm.shape,
@@ -208,7 +208,7 @@ def train(FLAGS):
                 optim_D.zero_grad()
 
                 loss = loss_fn(net_D_real, net_D_fake)
-                loss_gp = cacl_gradient_penalty(net_D, real, fake)
+                loss_gp = cacl_gradient_penalty(net_D, real, fake, FLAGS.grad_loss)
                 loss_all = loss + FLAGS.alpha * loss_gp
 
                 loss_gp.backward()
