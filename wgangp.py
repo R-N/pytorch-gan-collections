@@ -1,6 +1,7 @@
 import os
 import argparse
 import pandas as pd
+import json
 import torch
 import torch.optim as optim
 from absl import flags, app
@@ -174,10 +175,11 @@ def train(FLAGS):
         pass
     writer = SummaryWriter(os.path.join(FLAGS.logdir))
     sample_z = torch.randn(FLAGS.sample_size, FLAGS.z_dim).to(device)
+    s_flags = json.dumps(vars(FLAGS))
     with open(os.path.join(FLAGS.logdir, "flagfile.txt"), 'w') as f:
-        f.write(FLAGS.flags_into_string())
+        f.write(s_flags)
     writer.add_text(
-        "flagfile", FLAGS.flags_into_string().replace('\n', '  \n'))
+        "flagfile", s_flags.replace('\n', '  \n'))
 
     real, _ = next(iter(dataloader))
     grid = (make_grid(real[:FLAGS.sample_size]) + 1) / 2
