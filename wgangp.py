@@ -1,5 +1,5 @@
 import os
-
+import argparse
 import pandas as pd
 import torch
 import torch.optim as optim
@@ -38,38 +38,39 @@ grad_loss_fns = {
     'mire': losses.mire,
 }
 
-FLAGS = flags.FLAGS
+ap = argparse.ArgumentParser()
+
 # model and training
-flags.DEFINE_enum('dataset', 'cifar10', ['cifar10', 'stl10'], "dataset")
-flags.DEFINE_enum('arch', 'res32', net_G_models.keys(), "architecture")
-flags.DEFINE_integer('total_steps', 1000, "total number of training steps")
-flags.DEFINE_integer('batch_size', 64, "batch size")
-flags.DEFINE_float('lr_G', 2e-4, "Generator learning rate")
-flags.DEFINE_float('lr_D', 2e-4, "Discriminator learning rate")
-flags.DEFINE_multi_float('betas', [0.0, 0.9], "for Adam")
-flags.DEFINE_integer('n_dis', 5, "update Generator every this steps")
-flags.DEFINE_integer('z_dim', 128, "latent space dimension")
-flags.DEFINE_float('alpha', 10, "gradient penalty")
-flags.DEFINE_enum('loss', 'was', loss_fns.keys(), "loss function")
-flags.DEFINE_enum('grad_loss', 'mse', grad_loss_fns.keys(), "grad loss function")
-flags.DEFINE_integer('seed', 0, "random seed")
+ap.add_argument('--dataset', default='cifar10', choices=['cifar10', 'stl10'], help="dataset", type=str)
+ap.add_argument('--arch', default='res32', choices=net_G_models.keys(), help="architecture", type=str)
+ap.add_argument('--total_steps', default=1000, help="total number of training steps", type=int)
+ap.add_argument('--batch_size', default=64, help="batch size", type=int)
+ap.add_argument('--lr_G', default=2e-4, help="Generator learning rate", type=float)
+ap.add_argument('--lr_D', default=2e-4, help="Discriminator learning rate", type=float)
+ap.add_argument('--betas', [0.0,0.9], help="for Adam", type=list)
+ap.add_argument('--n_dis', default=5, help="update Generator every this steps", type=int)
+ap.add_argument('--z_dim', default=128, help="latent space dimension", type=int)
+ap.add_argument('--alpha', default=10, help="gradient penalty", type=int)
+ap.add_argument('--loss', default='was', choices=loss_fns.keys(), help="loss function", type=str)
+ap.add_argument('--grad_loss', default='mse', choices=grad_loss_fns.keys(), help="grad loss function", type=str)
+ap.add_argument('--seed', default=0, help="random seed", type=int)
 # logging
-flags.DEFINE_integer('eval_step', 1000, "evaluate FID and Inception Score")
-flags.DEFINE_integer('sample_step', 500, "sample image every this steps")
-flags.DEFINE_integer('sample_size', 64, "sampling size of images")
-flags.DEFINE_string('logdir', './logs/WGANGP_CIFAR10_RES', 'logging folder')
-flags.DEFINE_bool('record', False, "record inception score and FID")
-flags.DEFINE_string('fid_cache', './stats/cifar10.train.npz', 'FID cache')
+ap.add_argument('--eval_step', default=1000, help="evaluate FID and Inception Score", type=int)
+ap.add_argument('--sample_step', default=500, help="sample image every this steps", type=int)
+ap.add_argument('--sample_size', default=64, help="sampling size of images", type=int)
+ap.add_argument('--logdir', default='./logs/WGANGP_CIFAR10_RES', help='logging folder', type=bool)
+ap.add_argument('--record', default=False, help="record inception score and FID", type=str)
+ap.add_argument('--fid_cache', default='./stats/cifar10.train.npz', help='FID cache', type=str)
 # generate
-flags.DEFINE_bool('generate', False, 'generate images')
-flags.DEFINE_string('pretrain', None, 'path to test model')
-flags.DEFINE_string('output', './outputs', 'path to output dir')
-flags.DEFINE_integer('num_images', 1000, 'the number of generated images')
+ap.add_argument('--generate', default=False, help='generate images', type=bool)
+ap.add_argument('--pretrain', default=None, help='path to test model', type=bool)
+ap.add_argument('--output', default='./outputs', help='path to output dir', type=str)
+ap.add_argument('--num_images', default=1000, help='the number of generated images', type=int)
 
 device = torch.device('cuda:0')
 
 
-def generate():
+def generate(FLAGS):
     assert FLAGS.pretrain is not None, "set model weight by --pretrain [model]"
 
     net_G = net_G_models[FLAGS.arch](FLAGS.z_dim).to(device)
@@ -131,7 +132,7 @@ def append_log(log, key, value, extend=False):
 def mean(x):
     return sum(x) / len(x)
 
-def train():
+def train(FLAGS):
     if FLAGS.dataset == 'cifar10':
         dataset = datasets.CIFAR10(
             './data', train=True, download=True,
@@ -287,8 +288,8 @@ def train():
                     writer.add_scalar('Inception_Score_std', IS[1], step)
                     writer.add_scalar('FID', FID, step)
     
-    df_history = save_log(log_history, "history")
-    df_values = save_log(log_values, "values")
+    df_history = save_log(FLAGS.logdir, log_history, "history")
+    df_values = save_log(FLAGS.logdir, log_values, "values")
 
     df_history[["d_grad", "gp_grad"]].plot()
     df_history[["d_loss", "d_gp"]].plot()
@@ -307,14 +308,21 @@ def train():
                 IS[0], IS[1], FID))
     writer.close()
 
-def save_log(log, name="log"):
+def save_log(log_dir, log, name="log"):
     df = pd.DataFrame(log)
     df = pd.DataFrame.from_dict(log, orient='index')
     df = df.transpose()
-    df.to_csv(os.path.join(FLAGS.logdir, f"name.csv"))
+    df.to_csv(os.path.join(log_dir, f"{name}.csv"))
     return df
 
-def main(argv):
+def main(s=None):
+
+    if isinstance(s, str):
+        s = [si.strip() for si in s.replace("\\", "").split(" ")]
+        s = [si.strip() for si in s if si]
+
+    FLAGS = ap.parse_args(s)
+
     print("grad_loss", FLAGS.grad_loss)
     print("total_steps", FLAGS.total_steps)
     print("eval_step", FLAGS.eval_step)
@@ -322,10 +330,10 @@ def main(argv):
     print("num_images", FLAGS.num_images)
     set_seed(FLAGS.seed)
     if FLAGS.generate:
-        generate()
+        generate(FLAGS)
     else:
-        train()
+        train(FLAGS)
 
 
 if __name__ == '__main__':
-    app.run(main)
+    main()
