@@ -65,7 +65,9 @@ ap.add_argument('--fid_cache', default='./stats/cifar10.train.npz', help='FID ca
 ap.add_argument('--generate', default=False, help='generate images', type=bool)
 ap.add_argument('--pretrain', default=None, help='path to test model', type=bool)
 ap.add_argument('--output', default='./outputs', help='path to output dir', type=str)
-ap.add_argument('--num_images', default=1000, help='the number of generated images', type=int)
+ap.add_argument('--num_images', default=1000, help='the number of generated images', type=int)\
+
+ap.add_argument('--flagfile', default="./configs/WGANGP_CIFAR10_CNN.txt ", help='flagfile', type=str)
 
 device = torch.device('cuda:0')
 
