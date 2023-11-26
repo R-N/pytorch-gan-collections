@@ -313,7 +313,6 @@ def train(FLAGS):
     writer.close()
 
 def save_log(log_dir, log, name="log"):
-    df = pd.DataFrame(log)
     df = pd.DataFrame.from_dict(log, orient='index')
     df = df.transpose()
     df.to_csv(os.path.join(log_dir, f"{name}.csv"))
