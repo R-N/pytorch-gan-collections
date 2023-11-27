@@ -51,7 +51,7 @@ ap.add_argument('--lr_D', default=2e-4, help="Discriminator learning rate", type
 ap.add_argument('--betas', default=[0.0,0.9], help="for Adam", type=list)
 ap.add_argument('--n_dis', default=5, help="update Generator every this steps", type=int)
 ap.add_argument('--z_dim', default=128, help="latent space dimension", type=int)
-ap.add_argument('--alpha', default=10, help="gradient penalty", type=int)
+ap.add_argument('--alpha', default=10, help="gradient penalty", type=float)
 ap.add_argument('--loss', default='was', choices=loss_fns.keys(), help="loss function", type=str)
 ap.add_argument('--grad_loss', default='mse', choices=grad_loss_fns.keys(), help="grad loss function", type=str)
 ap.add_argument('--seed', default=0, help="random seed", type=int)
