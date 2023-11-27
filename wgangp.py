@@ -345,8 +345,10 @@ def main(s=None):
 
     FLAGS = parse_args(s)
     if FLAGS["flagfile"]:
+        with open(FLAGS["flagfile"]) as f:
+            s = f.read()
         FLAGS = {
-            **parse_args(FLAGS["flagfile"]),
+            **parse_args(s),
             **FLAGS,
         }
 
