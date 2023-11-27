@@ -348,8 +348,8 @@ def main(s=None):
         with open(FLAGS["flagfile"]) as f:
             s = f.read()
         FLAGS = {
-            **parse_args(s),
             **FLAGS,
+            **parse_args(s),
         }
 
     print(FLAGS)
