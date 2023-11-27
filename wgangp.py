@@ -331,19 +331,26 @@ def save_log(log_dir, log, name="log"):
     df.to_csv(os.path.join(log_dir, f"{name}.csv"))
     return df
 
-def main(s=None):
-
+def parse_args(s=None):
     if isinstance(s, str):
         s = [si.strip() for si in s.replace("\\", "").split(" ")]
         s = [si.strip() for si in s if si]
 
     FLAGS = ap.parse_args(s)
 
-    print("grad_loss", FLAGS.grad_loss)
-    print("total_steps", FLAGS.total_steps)
-    print("eval_step", FLAGS.eval_step)
-    print("sample_step", FLAGS.sample_step)
-    print("num_images", FLAGS.num_images)
+    return FLAGS
+
+
+def main(s=None):
+
+    FLAGS = parse_args(s)
+    if FLAGS["flagfile"]:
+        FLAGS = {
+            **parse_args(FLAGS["flagfile"]),
+            **FLAGS,
+        }
+
+    print(FLAGS)
     set_seed(FLAGS.seed)
     if FLAGS.generate:
         generate(FLAGS)
