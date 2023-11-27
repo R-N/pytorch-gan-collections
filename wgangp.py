@@ -303,15 +303,26 @@ def train(FLAGS):
     df_values[["d_loss", "d_gp"]].hist()
 
     if not FLAGS.record:
-        imgs = generate_imgs(
-            net_G, device, FLAGS.z_dim,
-            FLAGS.num_images, FLAGS.batch_size)
-        IS, FID = get_inception_score_and_fid(
-            imgs, FLAGS.fid_cache, verbose=True)
-        print(
-            "Inception Score: %.3f(%.5f), "
-            "FID: %6.3f" % (
-                IS[0], IS[1], FID))
+        with torch.no_grad():
+            imgs = generate_imgs(
+                net_G, device, FLAGS.z_dim,
+                FLAGS.num_images, FLAGS.batch_size)
+            IS, FID = get_inception_score_and_fid(
+                imgs, FLAGS.fid_cache, verbose=True)
+            print(
+                "Inception Score: %.3f(%.5f), "
+                "FID: %6.3f" % (
+                    IS[0], IS[1], FID))
+            counter = 0
+            try:
+                os.makedirs(FLAGS.output)
+            except FileExistsError:
+                pass
+            for image in imgs:
+                image = image.cpu()
+                save_image(
+                    image, os.path.join(FLAGS.output, '%d.png' % counter))
+                counter += 1
     writer.close()
 
 def save_log(log_dir, log, name="log"):

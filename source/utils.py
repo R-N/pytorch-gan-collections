@@ -3,6 +3,8 @@ import random
 import torch
 import numpy as np
 from tqdm import trange
+from imageio import imwrite
+import os
 
 
 def generate_imgs(net_G, device, z_dim=128, size=5000, batch_size=128):
@@ -51,3 +53,23 @@ def reduce_grad(grad):
         grad = grad.sum(dim=0)
     return grad
 
+
+def save_img(img_tensor, dir_path, img_name):
+    """Saves a data point as .png file in dir_path with img_name as name.
+
+    Args:
+        img_tensor (torch.Tensor): The image of shape CxHxW in the range [0-1]
+        dir_path (str): The folder where in which the images must be saved
+        ig_name (str): The name to apply to the file containing the image.
+    """
+
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+        print(f"--> Created folder {dir_path}. Images will be saved here")
+
+    img = 255.0 * torch.movedim(img_tensor, 0, 2).cpu().detach().numpy()
+    if img.shape[-1] == 1:
+        img = np.repeat(img, repeats=3, axis=-1)
+
+    img = img.astype("uint8")
+    imwrite(os.path.join(dir_path, f"{img_name}"), img)
