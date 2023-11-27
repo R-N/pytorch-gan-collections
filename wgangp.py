@@ -295,6 +295,8 @@ def train(FLAGS):
     df_history = save_log(FLAGS.logdir, log_history, "history")
     df_values = save_log(FLAGS.logdir, log_values, "values")
 
+    df_history["d_loss"] = -df_history["d_loss"]
+    df_values["d_loss"] = -df_values["d_loss"]
     df_history[["d_grad", "gp_grad"]].plot()
     df_history[["d_loss", "d_gp"]].plot()
     df_values[["d_grad", "gp_grad"]].hist()
