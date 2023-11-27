@@ -44,7 +44,7 @@ ap = argparse.ArgumentParser()
 # model and training
 ap.add_argument('--dataset', default='cifar10', choices=['cifar10', 'stl10'], help="dataset", type=str)
 ap.add_argument('--arch', default='res32', choices=net_G_models.keys(), help="architecture", type=str)
-ap.add_argument('--total_steps', default=1000, help="total number of training steps", type=int)
+ap.add_argument('--total_steps', default=100000, help="total number of training steps", type=int)
 ap.add_argument('--batch_size', default=64, help="batch size", type=int)
 ap.add_argument('--lr_G', default=2e-4, help="Generator learning rate", type=float)
 ap.add_argument('--lr_D', default=2e-4, help="Discriminator learning rate", type=float)
@@ -56,7 +56,7 @@ ap.add_argument('--loss', default='was', choices=loss_fns.keys(), help="loss fun
 ap.add_argument('--grad_loss', default='mse', choices=grad_loss_fns.keys(), help="grad loss function", type=str)
 ap.add_argument('--seed', default=0, help="random seed", type=int)
 # logging
-ap.add_argument('--eval_step', default=1000, help="evaluate FID and Inception Score", type=int)
+ap.add_argument('--eval_step', default=5000, help="evaluate FID and Inception Score", type=int)
 ap.add_argument('--sample_step', default=500, help="sample image every this steps", type=int)
 ap.add_argument('--sample_size', default=64, help="sampling size of images", type=int)
 ap.add_argument('--logdir', default='./logs/WGANGP_CIFAR10_RES', help='logging folder', type=str)
@@ -66,7 +66,7 @@ ap.add_argument('--fid_cache', default='./stats/cifar10.train.npz', help='FID ca
 ap.add_argument('--generate', default=False, help='generate images', type=bool)
 ap.add_argument('--pretrain', default=None, help='path to test model', type=bool)
 ap.add_argument('--output', default='./outputs', help='path to output dir', type=str)
-ap.add_argument('--num_images', default=1000, help='the number of generated images', type=int)\
+ap.add_argument('--num_images', default=50000, help='the number of generated images', type=int)\
 
 ap.add_argument('--flagfile', default="./configs/WGANGP_CIFAR10_CNN.txt ", help='flagfile', type=str)
 
