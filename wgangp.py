@@ -333,7 +333,7 @@ def save_log(log_dir, log, name="log"):
 
 def split_args(s=None):
     if isinstance(s, str):
-        s = [si.strip() for si in s.replace("\\", "").split(" ")]
+        s = [si.strip() for si in s.replace("\\", "").split()]
         s = [si.strip() for si in s if si]
 
     if not s:
